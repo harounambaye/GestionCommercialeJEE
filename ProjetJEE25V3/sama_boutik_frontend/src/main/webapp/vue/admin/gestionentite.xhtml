@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<h:head>
+    <title>Gestion des Entités Commerciales</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+/* === STRUCTURE GLOBALE === */
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #f8fafc;
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 290px;
+    background: #1e293b;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+}
+
+.main {
+    margin-left: 290px;
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.nav-item {
+    display: block;
+    background: none;
+    border: none;
+    color: white;
+    font-weight: 650;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 6px;
+}
+.nav-item:hover { background: #334155; }
+.logout { color: #f87171; }
+
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+
+/* === FORMULAIRES === */
+.btn {
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:6px;
+    padding:8px 14px;
+    cursor:pointer;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.btn:hover { background:#1e40af; }
+
+select {
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    font-size:15px;
+    font-weight:600;
+    color:#1e293b;
+    background:white;
+    width:280px;
+}
+
+/* === TABLE === */
+table {
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 3px 6px rgba(0,0,0,0.05);
+}
+th, td { padding:12px 16px; text-align:left; }
+th { background:#f1f5f9; font-weight:700; color:#1e293b; }
+tr:nth-child(even) { background-color:#f9fafb; }
+
+/* === MODAL === */
+dialog {
+    border:none;
+    border-radius:10px;
+    width:600px;
+    max-width:90%;
+    padding:0;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+}
+.dialog-header {
+    background:#f1f5f9;
+    padding:1rem;
+    border-bottom:1px solid #e2e8f0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.dialog-body {
+    padding:1.2rem 1.5rem;
+    line-height:1.6;
+}
+.close-btn {
+    background:none;
+    border:none;
+    font-size:20px;
+    font-weight:bold;
+    color:#475569;
+    cursor:pointer;
+}
+
+/* === AUCUNE ENTITÉ === */
+.no-entity {
+    margin-top:20px;
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    text-align:center;
+    box-shadow:0 2px 5px rgba(0,0,0,0.05);
+}
+.no-entity h4 { color:#1e293b; margin-bottom:15px; }
+
+/* Gestionnaires inactifs désactivés dans la liste */
+select option[disabled] {
+    color: red !important; /* gris clair */
+    background-color: #f9fafb;
+    font-style: italic;
+}
+
+
+    </style>
+</h:head>
+
+<h:body>
+
+    <!-- ✅ Sidebar -->
+    <div class="sidebar">
+        <h2>SAMA BOUTIK</h2>
+        <h:form><h:commandButton value="🏠 Dashboard" action="#{navController.goToAccueil}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧩 Gestion des entités commerciales" action="#{navController.goToEntite}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="⚙ Gestion des activités commerciales" action="#{navController.goToActivite}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧑‍💼 Gestion des gestionnaires" action="#{navController.goToGestionnaire}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧑‍🤝‍🧑 Gestion des utilisateurs" action="#{navController.goToUtilisateur}" styleClass="nav-item" /></h:form>
+        <h:form style="margin-top:auto;"><h:commandButton value="🚪 Déconnexion" action="#{navController.logout}" styleClass="logout nav-item" /></h:form>
+    </div>
+
+    <!-- ✅ Main -->
+    <div class="main">
+        <div class="topbar">
+            <h3>Gestion des Entités Commerciales</h3>
+        </div>
+
+        <!-- ✅ Sélection activité -->
+        <h:form style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <h:outputLabel value="Activité commerciale :" for="activiteSelect" style="font-weight:600;"/>
+            <h:selectOneMenu id="activiteSelect" value="#{entiteController.activiteSelectionneeId}">
+                <f:selectItem itemLabel="-- Sélectionner --" itemValue="#{null}" />
+                <f:selectItems value="#{entiteController.activites}" var="a"
+                               itemLabel="#{a.nom}" itemValue="#{a.id}" />
+            </h:selectOneMenu>
+
+            <h:commandButton value="Lister Entités" styleClass="btn"
+                             action="#{entiteController.listerEntites}">
+                <f:ajax execute="@form" render="entiteTable detailEntiteForm" />
+            </h:commandButton>
+            
+            <!-- 🆕 Nouveau bouton Gestion Activités -->
+		    <h:commandButton value="⚙️ Gestion des Activités Commerciales"
+		                     styleClass="btn"
+		                     actionListener="#{entiteController.ouvrirGestionActivites}">
+		        <f:ajax execute="@this" render="activiteModalForm" onevent="openActiviteModalAjax" />
+		    </h:commandButton>
+    
+        </h:form>
+
+        <!-- ✅ Tableau ou message -->
+        <h:form id="entiteTable">
+            <h:panelGroup rendered="#{not empty entiteController.entites}">
+                <h4>Liste des entités pour l'Activité commerciale <b style="color:#22c55e;">#{entiteController.activiteSelectionneeNom}</b>
+                	<!-- 🔴 Badge si activité inactive -->
+                    <h:panelGroup rendered="#{not entiteController.activiteSelectionnee.statut}">
+                        <span class="badge-inactif" style="color:red;">(Inactif)</span>
+                    </h:panelGroup>
+                </h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entité</th>
+                            <th>Adresse</th>
+                            <th>Gestionnaire</th>
+                            <th>Statut Entité</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{entiteController.entites}" var="e">
+                            <tr>
+                                <td><b>#{e.nom}</b></td>
+                                <td>#{e.adresse}</td>
+                                <td>
+								    <h:outputText 
+								        value="#{e.gestionnaire != null ? e.gestionnaire.prenom.concat(' ').concat(e.gestionnaire.nom) : 'Aucun gestionnaire'}"
+								        style="#{e.gestionnaire != null and !e.gestionnaire.actif ? 'color:red;font-style:italic;' : 'color:#111827;'}" />
+								</td>
+
+                                <td>
+                                    <span style="
+                                        padding:4px 10px;
+                                        border:2px solid #{e.statut ? '#22c55e' : '#ef4444'};
+                                        color:#{e.statut ? '#22c55e' : '#ef4444'};
+                                        border-radius:20px;
+                                        font-weight:600;">
+                                        #{e.statut ? 'Actif' : 'Inactif'}
+                                    </span>
+                                </td>
+                                
+                                <td style="display:flex;gap:10px;">
+
+								    <!-- 👁️ Détails -->
+								    <h:form>
+									    <h:commandLink action="#{entiteController.preparerDetails(e)}" title="Détails">
+									        <i class="fas fa-eye" style="color:#0ea5e9;cursor:pointer;"></i>
+									        <f:ajax execute="@this" render="detailEntiteForm" onevent="openDetailEntiteModal" />
+									    </h:commandLink>
+								    </h:form>
+								    
+ <!-- ✏️ Modifier (désactivé si activité inactive) -->
+                                    <h:form>
+                                        <h:commandLink action="#{entiteController.preparerEdition(e)}" title="Modifier"
+                                                       disabled="#{not entiteController.activiteSelectionnee.statut}">
+                                            <i class="fas fa-pen"
+                                               style="color:#{entiteController.activiteSelectionnee.statut ? '#2563eb' : '#9ca3af'};
+                                                      cursor:#{entiteController.activiteSelectionnee.statut ? 'pointer' : 'not-allowed'};"></i>
+                                            <f:ajax execute="@this" render="editEntiteForm" onevent="openEditEntiteModal" />
+                                        </h:commandLink>
+                                    </h:form>
+
+                                    <!-- 🗑️ Supprimer (désactivé si activité inactive) -->
+                                    <h:form>
+									    <h:commandLink id="deleteBtn_#{e.id}"
+									                   action="#{entiteController.supprimerEntite(null)}"
+									                   disabled="#{not entiteController.activiteSelectionnee.statut}"
+									                   onclick="return confirm('Voulez-vous vraiment supprimer l’entité « #{e.nom} » ?');">
+									        <f:param name="entiteId" value="#{e.id}" />
+									        <i class="fas fa-trash"
+									           style="color:#{entiteController.activiteSelectionnee.statut ? 'red' : '#9ca3af'};
+									                  cursor:#{entiteController.activiteSelectionnee.statut ? 'pointer' : 'not-allowed'};"
+									           title="Supprimer"></i>
+									        <f:ajax execute="@this" render="entiteTable" />
+									    </h:commandLink>
+									</h:form>
+
+
+                                    <!-- ➕ Ajouter entité (masqué si activité inactive) -->
+                                    <h:panelGroup rendered="#{entiteController.activiteSelectionnee.statut}">
+                                        <h:form>
+                                            <h:commandLink action="#{entiteController.preparerCreationDepuisActivite(e.activite)}"
+                                                           title="Ajouter une entité">
+                                                <i class="fas fa-plus-circle" style="color:#16a34a;cursor:pointer;"></i>
+                                                <f:ajax execute="@this" render="creationEntiteForm" onevent="openCreationEntiteModalAjax" />
+                                            </h:commandLink>
+                                        </h:form>
+                                    </h:panelGroup>								    
+								</td>
+
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </h:panelGroup>
+
+            <!-- ✅ Si aucune entité -->
+            <h:panelGroup rendered="#{empty entiteController.entites and not empty entiteController.activiteSelectionneeId}">
+                <div class="no-entity">
+                    <h4>Aucune entité n’existe encore pour cette activité.</h4>
+                    <!-- Bouton création masqué si activité inactive -->
+                    <h:panelGroup rendered="#{entiteController.activiteSelectionnee.statut}">
+                        <h:commandButton value="Créer une entité" styleClass="btn"
+                                         action="#{entiteController.preparerCreationEntite}">
+                            <f:ajax execute="@this" render="creationEntiteForm"
+                                    onevent="openCreationEntiteModalAjax" />
+                        </h:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{not entiteController.activiteSelectionnee.statut}">
+                        <p style="color:#b91c1c;font-weight:600;">Impossible d’ajouter une entité : activité inactive.</p>
+                    </h:panelGroup>
+                </div>
+            </h:panelGroup>
+
+        </h:form>
+    </div>
+
+    <!-- ✅ MODAL DÉTAIL ENTITÉ -->
+    <h:form id="detailEntiteForm">
+        <dialog id="detailEntiteModal">
+            <div class="dialog-header">
+                <h3>Détails de l’Entité  <span style="color:#22c55e;"> #{entiteController.entiteEnDetail.nom}</span></h3>
+                <button type="button" class="close-btn" onclick="closeDetailEntiteModal()">&#215;</button>
+            </div>
+            <div class="dialog-body">
+                <p><b>Nom :</b> #{entiteController.entiteEnDetail.nom}</p>
+                <p><b>Email :</b> #{entiteController.entiteEnDetail.email}</p>
+                <p><b>Téléphone :</b> #{entiteController.entiteEnDetail.telephone}</p>
+                <p><b>Adresse :</b> #{entiteController.entiteEnDetail.adresse}</p>
+                <p>
+				  <b>Activité :</b> 
+				  #{entiteController.entiteEnDetail.activite.nom}
+				  <b style="color:#{entiteController.entiteEnDetail.activite.statut ? 'green' : 'red'};">
+				    (#{entiteController.entiteEnDetail.activite.statut ? 'Actif' : 'Inactif'})
+				  </b>
+				</p>
+
+                <p><b>Statut :</b>
+                    <span style="color:#{entiteController.entiteEnDetail.statut ? '#22c55e' : '#ef4444'};">
+                        #{entiteController.entiteEnDetail.statut ? 'Actif' : 'Inactif'}
+                    </span>
+                </p>
+                <hr/>
+                <h4>Gestionnaire</h4>
+                <p><b>Prénom :</b> #{entiteController.entiteEnDetail.gestionnaire.prenom}</p>
+                <p><b>Nom :</b> #{entiteController.entiteEnDetail.gestionnaire.nom}</p>
+                <p><b>Email :</b> #{entiteController.entiteEnDetail.gestionnaire.email}</p>
+                <p><b>Matricule :</b> #{entiteController.entiteEnDetail.gestionnaire.matricule}</p>
+            </div>
+        </dialog>
+    </h:form>
+
+    <script type="text/javascript">
+    //<![CDATA[
+    function openDetailEntiteModal(data){
+        if(data.status === "success"){
+            const dlg = document.getElementById("detailEntiteModal");
+            if(dlg && !dlg.open) dlg.showModal();
+        }
+    }
+    function closeDetailEntiteModal(){
+        const dlg = document.getElementById("detailEntiteModal");
+        if(dlg && dlg.open) dlg.close();
+    }
+    //]]>
+    </script>
+    
+    
+    <!-- ================================================= -->
+<!-- ✏️ MODAL : MODIFIER UNE ENTITÉ COMMERCIALE -->
+<h:form id="editEntiteForm">
+    <dialog id="editEntiteModal" onclick="if(event.target === this) closeEditEntiteModal();">
+        <div class="dialog-header">
+            <h3 style="margin:0;">
+                ✏️ Modifier <span style="color:#2563eb;">#{entiteController.entiteEnEdition.nom}</span><br/>
+                
+                <small>Activité actuelle :
+                    <span style="color:#16a34a;">#{entiteController.activiteSelectionneeNom}</span>
+                </small>
+            </h3>
+            <button type="button" class="close-btn" onclick="closeEditEntiteModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:14px;">
+            
+            <!-- NOM -->
+            <h:outputLabel value="Nom de l’entité :" for="nomEntite" />
+            <h:inputText id="nomEntite"
+                         value="#{entiteController.entiteEnEdition.nom}"
+                         style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;" />
+
+            <!-- ADRESSE -->
+            <h:outputLabel value="Adresse :" for="adresseEntite" />
+            <h:inputText id="adresseEntite"
+                         value="#{entiteController.entiteEnEdition.adresse}"
+                         style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;" />
+
+            <!-- TÉLÉPHONE -->
+            <h:outputLabel value="Téléphone :" for="telEntite" />
+            <h:inputText id="telEntite"
+                         value="#{entiteController.entiteEnEdition.telephone}"
+                         style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;" />
+
+           <!-- GESTIONNAIRE -->
+<h:outputLabel value="Gestionnaire :" for="gestionnaireSelect" />
+<h:selectOneMenu id="gestionnaireSelect"
+                 value="#{entiteController.entiteEnEdition.gestionnaire}"
+                 converter="omnifaces.SelectItemsConverter"
+                 style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;">
+
+    <f:selectItem itemLabel="-- Sélectionner un gestionnaire --" itemValue="#{null}" />
+
+    <f:selectItems value="#{entiteController.gestionnairesDisponibles}"
+                   var="g"
+                   itemValue="#{g}"
+                   itemLabel="#{g.prenom} #{g.nom} (#{g.matricule})"
+                   itemDisabled="#{!g.actif}" />
+</h:selectOneMenu>
+
+<style>
+    /* 🩶 Griser les options désactivées dans les menus déroulants */
+    select option:disabled {
+        color: #9ca3af;
+        font-style: italic;
+    }
+</style>
+
+
+
+
+            <!-- ACTIVITÉ COMMERCIALE -->
+            <h:outputLabel value="Activité commerciale :" for="activiteSelectModif" />
+            <h:selectOneMenu id="activiteSelectModif"
+                             value="#{entiteController.entiteEnEdition.activite}"
+                             converter="omnifaces.SelectItemsConverter"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;">
+                <f:selectItems value="#{entiteController.activites}" var="a"
+                               itemLabel="#{a.nom}" itemValue="#{a}" />
+            </h:selectOneMenu>
+
+            <!-- STATUT -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:5px;">
+                <h:selectBooleanCheckbox id="statutEntite"
+                                         value="#{entiteController.entiteEnEdition.statut}" />
+                <h:outputLabel for="statutEntite" value="Actif" style="font-weight:600;color:#1e293b;" />
+            </div>
+
+            <!-- BOUTON ENREGISTRER -->
+            <div style="text-align:right;margin-top:20px;">
+                <h:commandButton value="💾 Enregistrer"
+                                 styleClass="btn"
+                                 action="#{entiteController.sauvegarderEdition}">
+                    <f:ajax execute="@form" render="entiteTable editEntiteForm"
+                            onevent="closeEditEntiteModalAjax"/>
+                </h:commandButton>
+            </div>
+        </div>
+    </dialog>
+</h:form>
+
+<script type="text/javascript">
+//<![CDATA[
+function openEditEntiteModal(data){
+    if(data.status === "success"){
+        const dlg = document.getElementById("editEntiteModal");
+        if(dlg && !dlg.open) dlg.showModal();
+    }
+}
+function closeEditEntiteModal(){
+    const dlg = document.getElementById("editEntiteModal");
+    if(dlg && dlg.open) dlg.close();
+}
+function closeEditEntiteModalAjax(data){
+    if(data.status === "success"){
+        Swal.fire({
+            icon: 'success',
+            title: 'Entité mise à jour !',
+            text: 'Les informations ont été enregistrées avec succès.',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
+        }).then(() => closeEditEntiteModal());
+    }
+}
+//]]>
+</script>
+
+
+    
+
+
+   
+   <!-- ================================================= -->
+   <!-- ➕ MODAL : CRÉER UNE NOUVELLE ENTITÉ COMMERCIALE -->
+   <!-- ================================================= --> 
+    <h:form id="creationEntiteForm">
+    <dialog id="creationEntiteModal">
+        <div class="dialog-header">
+            <h3>➕ Créer une nouvelle entité pour <span style="color:#2563eb;">#{entiteController.activiteSelectionneeNom}</span></h3>
+            <button type="button" class="close-btn" onclick="closeCreationEntiteModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body">
+            <div style="display:grid;gap:10px;">
+
+                <label>Nom de l’entité :</label>
+                <h:inputText value="#{entiteController.entiteEnEdition.nom}"
+                             required="true"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;"/>
+
+                <label>Adresse :</label>
+                <h:inputText value="#{entiteController.entiteEnEdition.adresse}"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;"/>
+
+                <label>Téléphone :</label>
+                <h:inputText value="#{entiteController.entiteEnEdition.telephone}"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;"/>
+
+                <label>Email :</label>
+                <h:inputText value="#{entiteController.entiteEnEdition.email}"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;"/>
+
+                <label>Description :</label>
+                <h:inputTextarea value="#{entiteController.entiteEnEdition.description}"
+                                 rows="3"
+                                 style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;resize:none;"/>
+
+                <label>Gestionnaire :</label>
+                <h:selectOneMenu id="gestionnaireSelect"
+                 value="#{entiteController.entiteEnEdition.gestionnaire}"
+                 converter="omnifaces.SelectItemsConverter"
+                 style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;">
+                 
+    <f:selectItem itemLabel="-- Sélectionner un gestionnaire --" itemValue="#{null}" />
+    
+    <f:selectItems value="#{entiteController.gestionnairesDisponibles}"
+                   var="g"
+                   itemValue="#{g}"
+                   itemLabel="#{g.prenom} #{g.nom} (#{g.matricule})"
+                   itemDisabled="#{!g.actif}" />
+</h:selectOneMenu>
+
+
+                <label>
+                    <h:selectBooleanCheckbox value="#{entiteController.entiteEnEdition.statut}" />
+                    <span>Actif</span>
+                </label>
+
+                <h:commandButton id="btnSaveEntite"
+	                 value="Enregistrer"
+	                 action="#{entiteController.sauvegarderEntite}"
+	                 styleClass="btn"
+	                 style="margin-top:10px;width:fit-content;">
+					    <f:ajax execute="@form"
+					            render="entiteTable creationEntiteForm"
+					            onevent="afterSaveEntiteAjax" />
+				</h:commandButton>
+
+            </div>
+        </div>
+    </dialog>
+</h:form>
+    
+<script type="text/javascript">
+//<![CDATA[
+
+// ✅ Ouvre le modal après AJAX (Création d'entité)
+function openCreationEntiteModalAjax(data) {
+    if (data.status === "success") {
+        const dlg = document.getElementById("creationEntiteModal");
+        if (dlg && !dlg.open) {
+            dlg.showModal();
+
+            // Fermer si clic à l’extérieur
+            document.addEventListener("click", handleOutsideClick);
+        }
+    }
+}
+
+// ✅ Fermer le modal
+function closeCreationEntiteModal() {
+    const dlg = document.getElementById("creationEntiteModal");
+    if (dlg && dlg.open) {
+        dlg.close();
+        document.removeEventListener("click", handleOutsideClick);
+    }
+}
+
+// ✅ Fermer si clic à l’extérieur du modal
+function handleOutsideClick(e) {
+    const dlg = document.getElementById("creationEntiteModal");
+    if (dlg && dlg.open && !dlg.contains(e.target)) {
+        dlg.close();
+        document.removeEventListener("click", handleOutsideClick);
+    }
+}
+
+// ✅ Après création réussie (SweetAlert de confirmation)
+function afterSaveEntiteAjax(data) {
+    if (data.status === "success") {
+        Swal.fire({
+            icon: 'success',
+            title: 'Entité créée !',
+            text: 'La nouvelle entité a été ajoutée avec succès.',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+
+        // Ferme la modale automatiquement après succès
+        closeCreationEntiteModal();
+    } else if (data.status === "error") {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur !',
+            text: 'Une erreur est survenue lors de la création de l’entité.',
+            confirmButtonColor: '#dc2626'
+        });
+    }
+}
+
+//]]>
+</script>
+
+<!-- ================================================= -->
+<!-- ⚙️ MODAL : GESTION DES ACTIVITÉS COMMERCIALES -->
+<!-- ================================================= -->
+<h:form id="activiteModalForm">
+    <!-- Messages -->
+    <h:messages id="activiteMessages" 
+                style="color:red;font-weight:600;margin-bottom:10px;" 
+                globalOnly="true" 
+                layout="list" />
+    <dialog id="activiteModal" onclick="if(event.target === this) closeActiviteModal();">
+        <div class="dialog-header">
+            <h3>⚙️ Gestion des Activités Commerciales</h3>
+            <button type="button" class="close-btn" onclick="closeActiviteModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h:outputText value="Liste complète des activités commerciales" style="font-weight:600;"/>
+                <h:commandButton value="➕ Ajouter une activité"
+                 styleClass="btn"
+                 style="background:#16a34a;"
+                 action="#{entiteController.preparerAjoutActivite}">
+				    <f:ajax execute="@this" render="ajoutActiviteForm" onevent="openAjoutActiviteModalAjax" />
+				</h:commandButton>
+
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:8px;">Nom</th>
+                        <th style="padding:8px;">Description</th>
+                        <th style="padding:8px;">Statut</th>
+                        <th style="padding:8px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ui:repeat value="#{entiteController.activites}" var="a">
+                        <tr>
+                            <td style="padding:8px;">#{a.nom}</td>
+                            <td style="padding:8px;">#{a.description}</td>
+                            <td style="padding:8px;">
+                                <span style="color:#{a.statut ? '#22c55e' : '#ef4444'};font-weight:600;">
+                                    #{a.statut ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td style="padding:8px;display:flex;gap:8px;">
+								<!-- ✏️ Modifier -->
+								<h:commandLink action="#{entiteController.preparerEditionActivite(a)}" title="Modifier">
+								    <i class="fas fa-pen" style="color:#2563eb;cursor:pointer;"></i>
+								    <f:ajax execute="@this" render="editActiviteForm" onevent="openEditActiviteModalAjax" />
+								</h:commandLink>
+                                <!-- 🗑️ Supprimer -->
+								<h:commandLink id="deleteAct_#{a.id}"
+               action="#{entiteController.supprimerActivite(a.id)}"
+               style="text-decoration:none;"
+               onclick="return confirm('Voulez-vous vraiment supprimer l’activité « #{a.nom} » ?');">
+    <i class="fas fa-trash" style="color:#dc2626;cursor:pointer;" title="Supprimer"></i>
+    <f:ajax execute="@this" render="activiteModalForm globalMessages" />
+</h:commandLink>
+
+
+
+                            </td>
+                        </tr>
+                    </ui:repeat>
+                </tbody>
+            </table>
+        </div>
+    </dialog>
+</h:form>
+
+<!-- ✅ JS pour ouverture/fermeture modale -->
+<script type="text/javascript">
+	//<![CDATA[
+	function openActiviteModalAjax(data) {
+	    if (data.status === "success") {
+	        const dlg = document.getElementById("activiteModal");
+	        if (dlg && !dlg.open) dlg.showModal();
+	    }
+	}
+	function closeActiviteModal() {
+	    const dlg = document.getElementById("activiteModal");
+	    if (dlg && dlg.open) dlg.close();
+	}
+	//]]>
+</script>
+
+
+<!-- ================================================= -->
+<!-- ➕ MODAL : AJOUTER UNE ACTIVITÉ COMMERCIALE -->
+<!-- ================================================= -->
+<h:form id="ajoutActiviteForm">
+    <dialog id="ajoutActiviteModal" onclick="if(event.target === this) closeAjoutActiviteModal();">
+        <div class="dialog-header">
+            <h3>➕ Ajouter une nouvelle activité commerciale</h3>
+            <button type="button" class="close-btn" onclick="closeAjoutActiviteModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:12px;">
+            
+            <h:outputLabel value="Nom de l’activité :" for="nomAct"/>
+            <h:inputText id="nomAct"
+                         value="#{entiteController.activiteEnEdition.nom}"
+                         required="true"
+                         style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;"/>
+
+            <h:outputLabel value="Description :" for="descAct"/>
+            <h:inputTextarea id="descAct"
+                             value="#{entiteController.activiteEnEdition.description}"
+                             rows="3"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;resize:none;width:100%;"/>
+
+            <div style="display:flex;align-items:center;gap:8px;">
+                <h:selectBooleanCheckbox id="statutAct"
+                                         value="#{entiteController.activiteEnEdition.statut}"/>
+                <h:outputLabel for="statutAct" value="Actif"/>
+            </div>
+
+            <div style="text-align:right;margin-top:10px;">
+                <h:commandButton value="💾 Enregistrer"
+                                 styleClass="btn"
+                                 action="#{entiteController.sauvegarderActivite}">
+                    <f:ajax execute="@form"
+                            render="activiteModalForm ajoutActiviteForm"
+                            onevent="afterSaveActiviteAjax"/>
+                </h:commandButton>
+            </div>
+        </div>
+    </dialog>
+</h:form>
+
+<script type="text/javascript">
+	//<![CDATA[
+	function openAjoutActiviteModalAjax(data){
+	    if(data.status === "success"){
+	        const dlg = document.getElementById("ajoutActiviteModal");
+	        if(dlg && !dlg.open) dlg.showModal();
+	    }
+	}
+	function closeAjoutActiviteModal(){
+	    const dlg = document.getElementById("ajoutActiviteModal");
+	    if(dlg && dlg.open) dlg.close();
+	}
+	function afterSaveActiviteAjax(data){
+	    if(data.status === "success"){
+	        Swal.fire({
+	            icon: 'success',
+	            title: 'Activité créée !',
+	            text: 'La nouvelle activité a été ajoutée avec succès.',
+	            showConfirmButton: false,
+	            timer: 2000,
+	            timerProgressBar: true
+	        });
+	        closeAjoutActiviteModal();
+	    }
+	}
+    //]]>
+</script>
+
+<!-- ================================================= -->
+<!-- ✏️ MODAL : MODIFIER UNE ACTIVITÉ COMMERCIALE -->
+<!-- ================================================= -->
+<h:form id="editActiviteForm">
+    <dialog id="editActiviteModal" onclick="if(event.target === this) closeEditActiviteModal();">
+        <div class="dialog-header">
+            <h3>✏️ Modifier l’activité :
+                <span style="color:#2563eb;">#{entiteController.activiteEnEdition.nom}</span>
+            </h3>
+            <button type="button" class="close-btn" onclick="closeEditActiviteModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:12px;">
+            
+            <h:outputLabel value="Nom de l’activité :" for="nomEditAct"/>
+            <h:inputText id="nomEditAct"
+                         value="#{entiteController.activiteEnEdition.nom}"
+                         required="true"
+                         style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:100%;"/>
+
+            <h:outputLabel value="Description :" for="descEditAct"/>
+            <h:inputTextarea id="descEditAct"
+                             value="#{entiteController.activiteEnEdition.description}"
+                             rows="3"
+                             style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;resize:none;width:100%;"/>
+
+            <div style="display:flex;align-items:center;gap:8px;">
+                <h:selectBooleanCheckbox id="statutEditAct"
+                                         value="#{entiteController.activiteEnEdition.statut}"/>
+                <h:outputLabel for="statutEditAct" value="Actif"/>
+            </div>
+
+            <div style="text-align:right;margin-top:10px;">
+                <h:commandButton value="💾 Enregistrer"
+                                 styleClass="btn"
+                                 action="#{entiteController.sauvegarderEditionActivite}">
+                    <f:ajax execute="@form"
+                            render="activiteModalForm editActiviteForm"
+                            onevent="afterEditActiviteAjax"/>
+                </h:commandButton>
+            </div>
+        </div>
+    </dialog>
+</h:form>
+
+<script type="text/javascript">
+//<![CDATA[
+	//=== Ouvrir et fermer le modal de modification ===
+	function openEditActiviteModalAjax(data){
+	    if(data.status === "success"){
+	        const dlg = document.getElementById("editActiviteModal");
+	        if(dlg && !dlg.open) dlg.showModal();
+	    }
+	}
+	function closeEditActiviteModal(){
+	    const dlg = document.getElementById("editActiviteModal");
+	    if(dlg && dlg.open) dlg.close();
+	}
+	function afterEditActiviteAjax(data){
+	    if(data.status === "success"){
+	        Swal.fire({
+	            icon: 'success',
+	            title: 'Activité modifiée !',
+	            text: 'Les informations ont été mises à jour avec succès.',
+	            showConfirmButton: false,
+	            timer: 2000,
+	            timerProgressBar: true
+	        });
+	        closeEditActiviteModal();
+	    }
+	}
+	    //]]>
+</script>
+
+<!-- ================================================= -->
+<!-- 🗑️ CONFIRMATION SUPPRESSION ACTIVITÉ COMMERCIALE -->
+<!-- ================================================= -->
+<script type="text/javascript">
+//<![CDATA[
+function confirmerSuppressionActivite(element, nomActivite, id) {
+    event.preventDefault(); // empêcher l’envoi immédiat du formulaire
+
+    Swal.fire({
+        title: "Confirmer la suppression",
+        html: `Voulez-vous vraiment supprimer <b>${nomActivite}</b> ?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Oui, supprimer",
+        cancelButtonText: "Annuler"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ✅ Déclenche la requête JSF pour exécuter la suppression
+            setTimeout(() => {
+                element.removeAttribute("onclick"); // éviter boucle
+                element.click(); // simulate click réel
+            }, 100);
+
+            // ✅ Message visuel temporaire
+            Swal.fire({
+                icon: 'info',
+                title: 'Suppression en cours...',
+                text: `L’activité « ${nomActivite} » va être supprimée.`,
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+            });
+        }
+    });
+
+    return false;
+}
+//]]>
+</script>
+
+
+</h:body>
+</html>

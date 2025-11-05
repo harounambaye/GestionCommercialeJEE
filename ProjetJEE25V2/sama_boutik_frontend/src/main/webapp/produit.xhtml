@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+
+<h:head>
+    <title>Gestion des Produits</title>
+    <meta charset="UTF-8" />
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif; margin: 24px; }
+        h1, h2 { margin: 0 0 12px; }
+        .grid label { font-weight: 600; }
+        .grid :is(input, textarea) { width: 280px; }
+        .actions { margin-top: 12px; }
+        table { border-collapse: collapse; margin-top: 8px; }
+        th, td { padding: 8px 10px; border: 1px solid #ddd; }
+        th { background: #f6f7f8; }
+    </style>
+</h:head>
+<h:body>
+
+    <h1>Gestion des Produits</h1>
+
+    <!-- Messages globaux (succès / erreur) -->
+    <h:messages id="msgs" globalOnly="true" layout="table"/>
+
+    <!-- Formulaire de création -->
+    <h:form id="formProduit">
+        <h2>Créer un produit</h2>
+        <h:panelGrid id="grid" columns="2" columnClasses="label,value" styleClass="grid">
+            <h:outputLabel for="nom" value="Nom :" />
+            <h:inputText id="nom" value="#{produitController.produit.nom}" required="true"
+                         requiredMessage="Le nom est obligatoire."/>
+
+            <h:outputLabel for="prix" value="Prix unitaire :" />
+            <h:inputText id="prix" value="#{produitController.produit.prixUnitaire}" required="true"
+                         requiredMessage="Le prix unitaire est obligatoire.">
+                <f:convertNumber type="number" maxFractionDigits="2"/>
+            </h:inputText>
+
+            <h:outputLabel for="quantite" value="Quantité :" />
+            <h:inputText id="quantite" value="#{produitController.produit.quantite}">
+                <f:convertNumber integerOnly="true"/>
+            </h:inputText>
+
+            <h:outputLabel for="description" value="Description :" />
+            <h:inputTextarea id="description" value="#{produitController.produit.description}" rows="3" cols="40"/>
+        </h:panelGrid>
+
+        <div class="actions">
+            <h:commandButton value="Créer" action="#{produitController.creerProduit}" />
+        </div>
+    </h:form>
+
+    <!-- Liste des produits -->
+    <h2>Liste des produits</h2>
+    <h:form id="formListe">
+        <h:dataTable id="tableProduits" value="#{produitController.produits}" var="p" rows="10">
+            <h:column>
+                <f:facet name="header">ID</f:facet>
+                #{p.id}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Nom</f:facet>
+                #{p.nom}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Prix unitaire</f:facet>
+                <h:outputText value="#{p.prixUnitaire}"><f:convertNumber type="number" maxFractionDigits="2"/></h:outputText>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Quantité</f:facet>
+                #{p.quantite}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Description</f:facet>
+                #{p.description}
+            </h:column>
+        </h:dataTable>
+    </h:form>
+
+</h:body>
+</html>

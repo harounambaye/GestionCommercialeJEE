@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<h:head>
+    <title>Gestion des Utilisateurs</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #f8fafc;
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden; /* empêche la page entière de scroller */
+}
+
+/* ✅ Sidebar fixée */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 290px;
+    background: #1e293b;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+/* ✅ Zone principale à droite */
+.main {
+    margin-left: 280px; /* pour laisser la place à la sidebar */
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto; /* scroll vertical uniquement sur le contenu */
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+/* autres styles inchangés */
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.nav-item {
+    display: block;
+    background: none;
+    border: none;
+    color: white;
+    font-weight: 650;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 6px;
+}
+.nav-item:hover { background: #334155; }
+.logout { color: #f87171; }
+
+        .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+        .toolbar { display:flex; gap:1rem; margin-bottom:1.5rem; }
+        .btn { background:#2563eb; color:white; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px; }
+        .btn:hover { background:#1e40af; }
+        .action-btn { background:#0ea5e9; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+        .action-btn:hover { background:#0284c7; }
+        .delete { background:#ef4444; }
+        .filter-bar { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+        select { padding:8px; border-radius:6px; border:1px solid #cbd5e1; }
+        table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden;
+                box-shadow:0 3px 6px rgba(0,0,0,0.05); }
+        th, td { padding:12px 16px; text-align:left; }
+        th { background:#f1f5f9; font-weight:700; color:#1e293b; }
+        tr:nth-child(even) { background-color:#f9fafb; }
+        dialog { border:none; border-radius:10px; width:600px; max-width:90%; padding:0;
+                 box-shadow:0 4px 14px rgba(0,0,0,0.25); }
+        .dialog-header { background:#f1f5f9; padding:1rem; border-bottom:1px solid #e2e8f0;
+                         display:flex; justify-content:space-between; align-items:center; }
+        .dialog-body { padding:1rem 1.5rem; }
+        .close-btn { background:none; border:none; font-size:20px; font-weight:bold; color:#475569; cursor:pointer; }
+        .pagination { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:15px; }
+        .page-btn { background:#e2e8f0; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; }
+        .page-btn:hover { background:#cbd5e1; }
+        .page-info { font-weight:600; color:#1e293b; }
+        
+        #ajoutUtilisateurForm\:ajoutMessages td {
+		    padding: 4px 0;
+		}
+        
+    </style>
+</h:head>
+
+<h:body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>SAMA BOUTIK</h2>
+        <h:form><h:commandButton value="🏠 Dashboard" action="#{navController.goToAccueil}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧩 Gestion des entités commerciales" action="#{navController.goToEntite}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value=" ⚙ Gestion des activités commerciales" action="#{navController.goToActivite}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧑‍💼 Gestion des gestionnaires" action="#{navController.goToGestionnaire}" styleClass="nav-item" /></h:form>
+        <h:form><h:commandButton value="🧑‍🤝‍🧑 Gestion des utilisateurs" action="#{navController.goToUtilisateur}" styleClass="nav-item" /></h:form>
+        <h:form style="margin-top:auto;"><h:commandButton value="🚪 Déconnexion" action="#{navController.logout}" styleClass="logout nav-item" /></h:form>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="topbar">
+            <h3>Gestion des Utilisateurs</h3>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn" type="button" onclick="openAjoutUtilisateurModal()">
+			    <i class="fas fa-user-plus"></i> Ajouter Utilisateur
+			</button>
+			
+            <button class="btn"><i class="fas fa-clock"></i> Historique de Connexion</button>
+            
+            <button class="btn" type="button" onclick="openPermissionModal()">
+			    <i class="fas fa-lock"></i> Gérer Permissions
+			</button>
+			
+			<button class="btn" type="button" onclick="openProfilModal()">
+		        <i class="fas fa-id-badge"></i> Gérer Profils
+		    </button>
+			            
+        </div>
+
+        <!-- Filtre par profil -->
+        <h:form styleClass="filter-bar">
+            <h:outputLabel for="profilSelect" value="Filtrer par profil :" />
+            <h:selectOneMenu id="profilSelect" value="#{utilisateurController.profilFiltreId}" style="min-width:200px;">
+                <f:selectItem itemLabel="Tous les profils" itemValue="#{null}" />
+                <f:selectItems value="#{utilisateurController.profils}" var="p"
+                               itemLabel="#{p.titre}" itemValue="#{p.id}" />
+            </h:selectOneMenu>
+            <h:commandButton value="Filtrer" action="#{utilisateurController.filtrerParProfil}" styleClass="btn" />
+        </h:form>
+        
+        <!-- Barre de recherche -->
+		<h:form style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+		    <h:inputText id="searchInput"
+		                 value="#{utilisateurController.termeRecherche}"
+		                 style="flex:1;padding:8px;border-radius:6px;border:1px solid #cbd5e1;"
+		                 placeholder="🔍 Rechercher un utilisateur par nom, prénom ou email">
+		        <f:ajax event="keyup" render="userForm" listener="#{utilisateurController.rechercherUtilisateurs}" />
+		    </h:inputText>
+		    <h:commandButton value="Rechercher" styleClass="btn"
+		                     action="#{utilisateurController.rechercherUtilisateurs}">
+		        <f:ajax execute="@form" render="userForm" />
+		    </h:commandButton>
+		</h:form>
+        
+
+        <!-- Tableau des utilisateurs avec pagination -->
+        <h:form id="userForm">
+            <h:dataTable value="#{utilisateurController.utilisateursPage}" var="u" style="width:100%;">
+                <h:column><f:facet name="header">Prénom</f:facet>#{u.prenom}</h:column>
+                <h:column><f:facet name="header">Nom</f:facet>#{u.nom}</h:column>
+		            <!-- ✅ Colonne Statut avec icône et bordure -->
+				<h:column>
+				    <f:facet name="header">Statut</f:facet>
+				
+				    <h:commandLink action="#{utilisateurController.toggleStatut(u)}" style="text-decoration:none;">
+				        <span style="
+				            display:inline-flex;
+				            align-items:center;
+				            gap:6px;
+				            padding:4px 10px;
+				            border:2px solid #{u.actif ? '#0ea5e9' : 'red'};
+				            border-radius:20px;
+				            font-weight:600;
+				            color:#{u.actif ? '#0ea5e9' : 'red'};
+				            cursor:pointer;
+				            transition:all .2s ease;">
+				            <i class="fas #{u.actif ? 'fa-check-circle' : 'fa-ban'}"></i>
+				            <h:outputText id="statusText" value="#{u.actif ? 'Actif' : 'Inactif'}" />
+				        </span>
+				        <f:ajax execute="@this" render="@this" />
+				    </h:commandLink>
+				</h:column>
+				
+				<h:column>
+				    <f:facet name="header">Modifier</f:facet>
+				    <h:commandLink action="#{utilisateurController.preparerEdition(u)}">
+				        <i class="fas fa-pen" style="color:#2563eb;cursor:pointer;"></i>
+				        <f:ajax execute="@this" render="editUserForm" onevent="openEditUserModal"/>
+				    </h:commandLink>
+				</h:column>
+
+
+                <h:column>
+                    <f:facet name="header">Rôle</f:facet>
+                    <h:commandButton styleClass="action-btn" value="Définir">
+                        <i class="fas fa-user-shield"></i>
+                        <f:param name="personneId" value="#{u.id}" />
+                        <f:ajax execute="@this"
+                                render="roleForm"
+                                listener="#{roleController.chargerRolesUtilisateur(param.personneId)}"
+                                onevent="openRoleDialog"/>
+                    </h:commandButton>
+                </h:column>
+            </h:dataTable>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <h:commandButton value="⏮ Précédent" action="#{utilisateurController.pagePrecedente}" styleClass="page-btn" disabled="#{!utilisateurController.hasPrev}" />
+                <span class="page-info">
+                    Page #{utilisateurController.pageCourante} / #{utilisateurController.totalPages}
+                </span>
+                <h:commandButton value="Suivant ⏭" action="#{utilisateurController.pageSuivante}" styleClass="page-btn" disabled="#{!utilisateurController.hasNext}" />
+            </div>
+        </h:form>
+    </div>
+    
+    <!-- ===================================== -->
+    <!-- 	 	  MODAL AJOUT UTILISATEUR        -->
+    <!-- ===================================== -->
+<h:form id="ajoutUtilisateurForm">
+    <dialog id="ajoutUtilisateurModal">
+        <div class="dialog-header">
+            <h3>Ajouter un utilisateur</h3>
+            <button type="button" class="close-btn" onclick="closeAjoutUtilisateurModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body">
+            <h:messages globalOnly="true" style="font-weight:600;margin-bottom:10px;" />
+
+            <!-- SECTION 1 : Informations utilisateur -->
+			<h4>Informations personnelles</h4>
+			<div style="display:grid;gap:12px;margin-bottom:15px;">
+			
+			    <h:inputText id="prenom" value="#{ajoutUtilisateurController.nouvelUtilisateur.prenom}" required="true">
+			        <f:passThroughAttribute name="placeholder" value="Prénom" />
+			    </h:inputText>
+			    <h:message for="prenom" style="color:red;" />
+			
+			    <h:inputText id="nom" value="#{ajoutUtilisateurController.nouvelUtilisateur.nom}" required="true">
+			        <f:passThroughAttribute name="placeholder" value="Nom" />
+			    </h:inputText>
+			    <h:message for="nom" style="color:red;" />
+			
+			    <h:inputText id="email" value="#{ajoutUtilisateurController.nouvelUtilisateur.email}" required="true">
+			        <f:passThroughAttribute name="placeholder" value="Email" />
+			    </h:inputText>
+			    <h:message for="email" style="color:red;" />
+			
+			    <h:inputSecret id="password" value="#{ajoutUtilisateurController.nouvelUtilisateur.password}" required="true">
+			        <f:passThroughAttribute name="placeholder" value="Mot de passe" />
+			    </h:inputSecret>
+			    <h:message for="password" style="color:red;" />
+			
+			    <!-- ✅ Nouveau champ Adresse -->
+			    <h:inputText id="adresse" value="#{ajoutUtilisateurController.nouvelUtilisateur.adresse}">
+			        <f:passThroughAttribute name="placeholder" value="Adresse" />
+			    </h:inputText>
+			    <h:message for="adresse" style="color:red;" />
+			
+			    <h:inputText id="lieuNaissance" value="#{ajoutUtilisateurController.nouvelUtilisateur.lieuNaissance}">
+			        <f:passThroughAttribute name="placeholder" value="Lieu de naissance" />
+			    </h:inputText>
+			    <h:message for="lieuNaissance" style="color:red;" />
+			
+			    <h:inputText id="dateNaissance"
+			                 value="#{ajoutUtilisateurController.nouvelUtilisateur.dateNaissance}"
+			                 converter="localDateConverter">
+			        <f:passThroughAttribute name="type" value="date" />
+			    </h:inputText>
+			    <h:message for="dateNaissance" style="color:red;" />
+			</div>
+
+
+            <!-- SECTION 2 : Attribution du profil -->
+            <h4>🎭 Attribution du profil</h4>
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;">
+                <h:selectOneMenu id="profilSelect"
+                                 value="#{ajoutUtilisateurController.profilSelectionneId}"
+                                 style="flex:1;padding:8px;border-radius:6px;border:1px solid #cbd5e1;">
+                    <f:selectItem itemLabel="-- Choisir un profil --" itemValue="#{null}" />
+                    <f:selectItems value="#{utilisateurController.profils}" var="p"
+                                   itemLabel="#{p.titre}" itemValue="#{p.id}" />
+                </h:selectOneMenu>
+                
+            </div>
+
+            <!-- SECTION 3 : Attribution des permissions -->
+            <h4>🔐 Attribution des permissions</h4>
+            <h:panelGroup id="permissionPanel">
+                <ui:repeat value="#{permissionController.permissions}" var="perm">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                        <h:selectBooleanCheckbox value="#{ajoutUtilisateurController.permissionsSelectionneesMap[perm.id]}" />
+                        <h:outputText value="#{perm.nom}" />
+                    </div>
+                </ui:repeat>
+            </h:panelGroup>
+
+            <!-- SECTION 4 : Bouton d’enregistrement -->
+            <div style="text-align:right;margin-top:20px;">
+                <h:commandButton value="Enregistrer" styleClass="btn"
+                                 action="#{ajoutUtilisateurController.enregistrerUtilisateurComplet}">
+                    <f:ajax execute="@form" render="@form utilisateurTable"
+                            onevent="handleAjoutUtilisateurAjax" />
+                </h:commandButton>
+            </div>
+        </div>
+    </dialog>
+</h:form>
+
+
+<!-- ✅ Scripts JS -->
+<script type="text/javascript">
+//<![CDATA[
+function openAjoutUtilisateurModal(){
+    const dlg = document.getElementById("ajoutUtilisateurModal");
+    if(dlg && !dlg.open) dlg.showModal();
+}
+
+function closeAjoutUtilisateurModal(){
+    const dlg = document.getElementById("ajoutUtilisateurModal");
+    if(dlg && dlg.open) dlg.close();
+}
+
+function handleAjoutUtilisateurAjax(data) {
+    if (data.status === "complete") {
+        // Vérifie s'il existe des erreurs JSF
+        const msgEl = document.getElementById("ajoutUtilisateurForm:ajoutMessages");
+        const hasError = msgEl && msgEl.textContent.trim().length > 0 &&
+                         msgEl.textContent.toLowerCase().includes("erreur") ||
+                         document.querySelectorAll("#ajoutUtilisateurForm .ui-message-error, #ajoutUtilisateurForm .facesMessageError").length > 0 ||
+                         document.querySelectorAll("#ajoutUtilisateurForm .error, #ajoutUtilisateurForm [style*='color:red']").length > 0;
+
+        if (hasError) {
+            // 🔴 Erreurs de validation → on reste ouvert
+            if (msgEl) msgEl.style.color = "red";
+        } else {
+            // ✅ Succès → popup SweetAlert2 puis fermeture du modal
+            Swal.fire({
+                icon: 'success',
+                title: 'Utilisateur ajouté avec succès !',
+                text: 'Le profil et les permissions ont été enregistrés correctement.',
+                confirmButtonColor: '#2563eb',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            }).then(() => {
+                closeAjoutUtilisateurModal();
+            });
+        }
+    }
+}
+//]]>
+</script>
+
+
+    <!-- ===================================== -->
+    <!-- 	  MODAL MODIFIER UTILISATEUR       -->
+    <!-- ===================================== -->
+		<h:form id="editUserForm">
+		    <dialog id="editUserModal">
+		        <div class="dialog-header">
+				    <div>
+				        <h3>
+				            Modifier : #{utilisateurController.utilisateurEnEdition.prenom}
+				            #{utilisateurController.utilisateurEnEdition.nom}
+				        </h3>
+				        <small style="color:gray;">
+				            Profil actuel :
+				            <h:outputText value="#{utilisateurController.profilActuelEdition.titre}" 
+				                          rendered="#{not empty utilisateurController.profilActuelEdition}" />
+				        </small>
+				    </div>
+				    <button type="button" class="close-btn" onclick="closeEditUserModal()">&#215;</button>
+				</div>
+
+		        <div class="dialog-body">
+		            <h:messages globalOnly="true" style="margin-bottom:10px;" />
+		
+		            <!-- SECTION 1 : Informations utilisateur -->
+		            <h4>Informations personnelles</h4>
+		            <div style="display:grid;gap:12px;margin-bottom:15px;">
+		                <h:inputText id="prenomEdit" value="#{utilisateurController.utilisateurEnEdition.prenom}" required="true">
+		                    <f:passThroughAttribute name="placeholder" value="Prénom" />
+		                </h:inputText>
+		
+		                <h:inputText id="nomEdit" value="#{utilisateurController.utilisateurEnEdition.nom}" required="true">
+		                    <f:passThroughAttribute name="placeholder" value="Nom" />
+		                </h:inputText>
+		
+		                <h:inputText id="emailEdit" value="#{utilisateurController.utilisateurEnEdition.email}" disabled="true">
+		                    <f:passThroughAttribute name="placeholder" value="Email (non modifiable)" />
+		                </h:inputText>
+		
+		                <h:inputText id="adresseEdit" value="#{utilisateurController.utilisateurEnEdition.adresse}">
+		                    <f:passThroughAttribute name="placeholder" value="Adresse" />
+		                </h:inputText>
+		
+		                <h:inputText id="lieuNaissanceEdit" value="#{utilisateurController.utilisateurEnEdition.lieuNaissance}">
+		                    <f:passThroughAttribute name="placeholder" value="Lieu de naissance" />
+		                </h:inputText>
+		
+		                <h:inputText id="dateNaissanceEdit"
+		                             value="#{utilisateurController.utilisateurEnEdition.dateNaissance}"
+		                             converter="localDateConverter">
+		                    <f:passThroughAttribute name="type" value="date" />
+		                </h:inputText>
+		            </div>
+		
+		            <!-- SECTION 2 : Profil -->
+		            <h4>🎭 Attribution du profil</h4>
+		            <h:selectOneMenu id="profilEdit"
+		                             value="#{utilisateurController.profilEditionId}"
+		                             style="width:100%;padding:8px;border-radius:6px;border:1px solid #cbd5e1;">
+		                <f:selectItems value="#{utilisateurController.profils}" var="p"
+		                               itemLabel="#{p.titre}" itemValue="#{p.id}" />
+		            </h:selectOneMenu>
+		
+		            <!-- Enregistrer -->
+		            <div style="text-align:right;margin-top:20px;">
+		                <h:commandButton value="Enregistrer" styleClass="btn"
+		                                 action="#{utilisateurController.sauvegarderEdition}">
+		                    <f:ajax execute="@form" render="@form userForm" onevent="closeEditUserModalAjax" />
+		                </h:commandButton>
+		            </div>
+		        </div>
+		    </dialog>
+		</h:form>
+		
+		<script type="text/javascript">
+		//<![CDATA[
+		function openEditUserModal(){
+		    const dlg = document.getElementById("editUserModal");
+		    if(dlg && !dlg.open) dlg.showModal();
+		}
+		function closeEditUserModal(){
+		    const dlg = document.getElementById("editUserModal");
+		    if(dlg && dlg.open) dlg.close();
+		}
+		function closeEditUserModalAjax(data){
+		    if(data.status === "success"){
+		        // ✅ Popup de confirmation
+		        Swal.fire({
+		            icon: 'success',
+		            title: 'Modification réussie !',
+		            text: 'Les informations de l’utilisateur ont été mises à jour avec succès.',
+		            confirmButtonColor: '#2563eb',
+		            timer: 1800,
+		            timerProgressBar: true,
+		            showConfirmButton: false
+		        }).then(() => {
+		            closeEditUserModal();
+		        });
+		    }
+		}
+		//]]>
+		</script>
+
+
+
+    <!-- ===================================== -->
+    <!-- 		 GESTION DES ROLES             -->
+    <!-- ===================================== -->
+    <h:form id="roleForm">
+        <dialog id="roleModal">
+            <div class="dialog-header">
+                <h3>Définir les permissions</h3>
+                <button type="button" class="close-btn" onclick="closeRoleModal()">&#215;</button>
+            </div>
+
+            <div class="dialog-body">
+                <h:panelGroup rendered="#{not empty roleController.utilisateurSelectionne}">
+                    <p><b>Utilisateur :</b>
+                        #{roleController.utilisateurSelectionne.prenom}
+                        #{roleController.utilisateurSelectionne.nom}
+                    </p>
+
+                    <div style="margin-top:1rem;display:flex;gap:10px;align-items:center;">
+                        <h:selectOneMenu value="#{roleController.permissionSelectionnee}"
+                                         converter="permissionConverter"
+                                         style="flex:1;padding:8px;border-radius:6px;border:1px solid #cbd5e1;">
+                            <f:selectItem itemLabel="-- Choisir une permission --" itemValue="#{null}" />
+                            <f:selectItems value="#{roleController.toutesPermissions}" var="perm"
+                                           itemLabel="#{perm.nom}" itemValue="#{perm}" />
+                        </h:selectOneMenu>
+
+                        <h:commandButton value="Ajouter" styleClass="btn" type="submit"
+                                         action="#{roleController.ajouterPermission}">
+                            <f:ajax execute="@form" render="@form" onevent="reouvrirModal"/>
+                        </h:commandButton>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr><th>Permission</th><th style="text-align:center;">Action</th></tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{roleController.rolesUtilisateur}" var="r">
+                                <tr>
+                                    <td>#{r.permission.nom}</td>
+                                    <td style="text-align:center;">
+                                        <h:commandLink action="#{roleController.supprimerPermission(r)}">
+                                            <i class="fa fa-trash" style="color:red;cursor:pointer;"></i>
+                                            <f:ajax execute="@this" render="@form" onevent="reouvrirModal"/>
+                                        </h:commandLink>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </h:panelGroup>
+
+                <div style="text-align:right;margin-top:1rem;">
+                    <button type="button" class="btn" style="background:#1e293b;" onclick="closeRoleModal()">Fermer</button>
+                </div>
+            </div>
+        </dialog>
+    </h:form>
+
+	<script type="text/javascript">
+	    //<![CDATA[
+	    function openRoleDialog(data){
+	        if(data.status === "success"){
+	            const dlg = document.getElementById("roleModal");
+	            if(dlg && !dlg.open) dlg.showModal();
+	        }
+	    }
+	    function closeRoleModal(){
+	        const dlg = document.getElementById("roleModal");
+	        if(dlg && dlg.open) dlg.close();
+	    }
+	    function reouvrirModal(data){
+	        if(data.status === "success"){
+	            const dlg = document.getElementById("roleModal");
+	            if(dlg) dlg.showModal();
+	        }
+	    }
+	    //]]>
+    </script>
+
+	<!-- ===================================== -->
+	<!-- MODAL GESTION DES PERMISSIONS -->
+	<!-- ===================================== -->
+	<h:form id="permissionForm">
+	    <dialog id="permissionModal">
+	        <div class="dialog-header">
+	            <h3>Gestion des Permissions</h3>
+	            <button type="button" class="close-btn" onclick="closePermissionModal()">&#215;</button>
+	        </div>
+	
+	        <div class="dialog-body">
+	        <h:messages globalOnly="true" style="color:red; font-weight:600; margin-bottom:10px;" />
+	            <h3>Ajouter une nouvelle permission</h3>
+	            <div style="display:flex; gap:10px; margin-bottom:15px;">
+	                <h:inputText value="#{permissionController.nouvellePermission.nom}" 
+	                             style="flex:1;padding:8px;border-radius:6px;border:1px solid #cbd5e1;"
+	                             placeholder="Nom de la permission"/>
+	                <h:commandButton value="Ajouter" styleClass="btn" action="#{permissionController.ajouterPermission}">
+	                    <f:ajax execute="@form" render="@form" onevent="reouvrirPermissionModal"/>
+	                </h:commandButton>
+	            </div>
+	
+	            <h3>Liste des permissions</h3>
+	            <table>
+				    <thead>
+				        <tr><th>Nom</th><th style="text-align:center;">Action</th></tr>
+				    </thead>
+				    <tbody>
+				        <ui:repeat value="#{permissionController.permissions}" var="perm">
+				            <tr>
+				                <td>
+				                    <h:inputText value="#{perm.nom}" style="width:100%;border:none;background:none;"/>
+				                </td>
+				                <td style="text-align:center;">
+    <span style="display:flex;justify-content:center;gap:10px;">
+        <!-- ✏️ Bouton modifier -->
+        <h:commandLink action="#{permissionController.ouvrirEdition(perm)}" title="Modifier">
+            <i class="fas fa-pen" style="color:#2563eb;cursor:pointer;"></i>
+            <f:ajax execute="@this" render="permissionEditForm" onevent="openPermissionEditModal"/>
+        </h:commandLink>
+
+        <!-- 🗑️ Bouton supprimer -->
+        <h:commandLink action="#{permissionController.supprimerPermission(perm)}" title="Supprimer">
+            <i class="fas fa-trash" style="color:red;cursor:pointer;"></i>
+            <f:ajax execute="@this" render="@form" onevent="reouvrirPermissionModal"/>
+        </h:commandLink>
+    </span>
+</td>
+
+				            </tr>
+				        </ui:repeat>
+				    </tbody>
+				</table>
+
+	        </div>
+	    </dialog>
+	</h:form>
+	
+	<script type="text/javascript">
+	//<![CDATA[
+	function openPermissionModal(){
+	    const dlg = document.getElementById("permissionModal");
+	    if(dlg && !dlg.open) dlg.showModal();
+	}
+	function closePermissionModal(){
+	    const dlg = document.getElementById("permissionModal");
+	    if(dlg && dlg.open) dlg.close();
+	}
+	function reouvrirPermissionModal(data){
+	    if(data.status === "success"){
+	        const dlg = document.getElementById("permissionModal");
+	        if(dlg) dlg.showModal();
+	    }
+	}
+	//]]>
+	</script>
+	<!-- ==================================================== -->
+	<!-- MODAL MODIFICATION PERMISSION -->
+	<!-- ==================================================== -->
+	<h:form id="permissionEditForm">
+	    <dialog id="permissionEditModal">
+	        <div class="dialog-header">
+	            <h3>Modifier une Permission</h3>
+	            <button type="button" class="close-btn" onclick="closePermissionEditModal()">&#215;</button>
+	        </div>
+	
+	        <div class="dialog-body">
+	            <h:panelGroup rendered="#{not empty permissionController.permissionSelectionnee}">
+	                <h:outputLabel value="Nom de la permission :" for="permNom" />
+	                <h:inputText id="permNom"
+	                             value="#{permissionController.permissionSelectionnee.nom}"
+	                             style="width:100%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #cbd5e1;" />
+	
+	                <div style="text-align:right;margin-top:15px;">
+	                    <h:commandButton value="Enregistrer" styleClass="btn" action="#{permissionController.sauvegarderEdition}">
+	                        <f:ajax execute="@form" render="permissionForm permissionEditForm" onevent="closePermissionEditModalAjax"/>
+	                    </h:commandButton>
+	                </div>
+	            </h:panelGroup>
+	        </div>
+	    </dialog>
+	</h:form>
+	
+	<script type="text/javascript">
+	//<![CDATA[
+	function openPermissionEditModal(){
+	    const dlg = document.getElementById("permissionEditModal");
+	    if(dlg && !dlg.open) dlg.showModal();
+	}
+	function closePermissionEditModal(){
+	    const dlg = document.getElementById("permissionEditModal");
+	    if(dlg && dlg.open) dlg.close();
+	}
+	function closePermissionEditModalAjax(data){
+	    if(data.status === "success"){
+	        closePermissionEditModal();
+	    }
+	}
+	//]]>
+	</script>
+
+<!-- ===================================== -->
+<!-- MODAL GESTION DES PROFILS -->
+<!-- ===================================== -->
+<h:form id="profilForm">
+    <dialog id="profilModal">
+        <div class="dialog-header">
+            <h3>Gestion des Profils</h3>
+            <button type="button" class="close-btn" onclick="closeProfilModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body">
+            <h:messages globalOnly="true" style="color:red; font-weight:600; margin-bottom:10px;" />
+
+            <h3>Ajouter un nouveau profil</h3>
+			<div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+			
+			    <h:inputText value="#{profilController.nouveauProfil.titre}" 
+			                 style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;">
+			        <f:passThroughAttribute name="placeholder" value="Nom du profil" />
+			    </h:inputText>
+			
+			    <h:inputTextarea value="#{profilController.nouveauProfil.description}" 
+			                     rows="2"
+			                     style="padding:8px;border-radius:6px;border:1px solid #cbd5e1;resize:none;">
+			        <f:passThroughAttribute name="placeholder" value="Description du profil (facultative)" />
+			    </h:inputTextarea>
+			
+			    <div style="text-align:right;">
+			        <h:commandButton value="Ajouter" styleClass="btn" 
+			                         action="#{profilController.ajouterProfil}">
+			            <f:ajax execute="@form" render="@form" onevent="reouvrirProfilModal"/>
+			        </h:commandButton>
+			    </div>
+			</div>
+
+
+
+            <h3>Liste des profils</h3>
+            <table>
+                <thead>
+                    <tr><th>Nom</th><th>Description</th><th style="text-align:center;">Action</th></tr>
+                </thead>
+                <tbody>
+                    <ui:repeat value="#{profilController.profils}" var="p">
+                        <tr>
+                            <td><h:inputText value="#{p.titre}" style="width:100%;border:none;background:none;"/></td>
+                            <td><h:inputText value="#{p.description}" style="width:100%;border:none;background:none;"/></td>
+                            <td style="text-align:center;">
+                                <span style="display:flex;justify-content:center;gap:10px;">
+                                    <!-- ✏️ Modifier -->
+                                    <h:commandLink action="#{profilController.ouvrirEditionParId}" title="Modifier">
+									    <i class="fas fa-pen" style="color:#2563eb;cursor:pointer;"></i>
+									    <f:param name="profilId" value="#{p.id}" />
+									    <f:ajax execute="@this" render="profilEditForm" onevent="openProfilEditModal"/>
+									</h:commandLink>
+
+                                    <!-- 🗑️ Supprimer -->
+                                    <h:commandLink action="#{profilController.supprimerProfil(p)}" title="Supprimer">
+                                        <i class="fas fa-trash" style="color:red;cursor:pointer;"></i>
+                                        <f:ajax execute="@this" render="@form" onevent="reouvrirProfilModal"/>
+                                    </h:commandLink>
+                                </span>
+                            </td>
+                        </tr>
+                    </ui:repeat>
+                </tbody>
+            </table>
+        </div>
+    </dialog>
+</h:form>
+
+<!-- ✅ JS modal gestion profils -->
+<script type="text/javascript">
+//<![CDATA[
+function openProfilModal(){
+    const dlg = document.getElementById("profilModal");
+    if(dlg && !dlg.open) dlg.showModal();
+}
+function closeProfilModal(){
+    const dlg = document.getElementById("profilModal");
+    if(dlg && dlg.open) dlg.close();
+}
+function reouvrirProfilModal(data){
+    if(data.status === "success"){
+        const dlg = document.getElementById("profilModal");
+        if(dlg) dlg.showModal();
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: 'Profil enregistré ou mis à jour avec succès !',
+            confirmButtonColor: '#2563eb',
+            timer: 1800,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    }
+}
+//]]>
+</script>
+	<!-- ===================================== -->
+	<!--         MODAL MODIFICATION PROFIL     -->
+	<!-- ===================================== -->
+	
+	<h:form id="profilEditForm">
+    <dialog id="profilEditModal">
+        <div class="dialog-header">
+            <h3>Modifier un Profil</h3>
+            <button type="button" class="close-btn" onclick="closeProfilEditModal()">&#215;</button>
+        </div>
+
+        <div class="dialog-body">
+            <h:panelGroup rendered="#{not empty profilController.profilSelectionne}">
+                <h:outputLabel value="Nom du profil :" for="profilTitre" />
+                <h:inputText id="profilTitre"
+                             value="#{profilController.profilSelectionne.titre}"
+                             style="width:100%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #cbd5e1;" />
+
+                <h:outputLabel value="Description :" for="profilDesc" />
+                <h:inputTextarea id="profilDesc"
+                                 value="#{profilController.profilSelectionne.description}"
+                                 style="width:100%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #cbd5e1;" />
+
+                <div style="text-align:right;margin-top:15px;">
+                    <h:commandButton value="Enregistrer" styleClass="btn" 
+                                     action="#{profilController.sauvegarderEdition}">
+                        <f:ajax execute="@form" render="profilForm profilEditForm" onevent="closeProfilEditModalAjax"/>
+                    </h:commandButton>
+                </div>
+            </h:panelGroup>
+        </div>
+    </dialog>
+</h:form>
+
+<script type="text/javascript">
+//<![CDATA[
+function openProfilEditModal(){
+    const dlg = document.getElementById("profilEditModal");
+    if(dlg && !dlg.open) dlg.showModal();
+}
+function closeProfilEditModal(){
+    const dlg = document.getElementById("profilEditModal");
+    if(dlg && dlg.open) dlg.close();
+}
+function closeProfilEditModalAjax(data){
+    if(data.status === "success"){
+        Swal.fire({
+            icon: 'success',
+            title: 'Profil modifié !',
+            text: 'Les informations du profil ont été mises à jour.',
+            confirmButtonColor: '#2563eb',
+            timer: 1800,
+            timerProgressBar: true,
+            showConfirmButton: false
+        }).then(() => closeProfilEditModal());
+    }
+}
+//]]>
+</script>
+	
+    
+</h:body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>Gestion des Activités Commerciales</title>
+    <meta charset="UTF-8" />
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 24px; }
+        h3 { margin-top: 0; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</h:head>
+<h:body>
+
+    <h:form>
+        <h3>Créer une Activité Commerciale</h3>
+
+        <h:panelGrid columns="2" cellpadding="5">
+            <h:outputLabel value="Code :" />
+            <h:inputText value="#{activiteController.activite.code}" required="true" />
+
+            <h:outputLabel value="Libellé :" />
+            <h:inputText value="#{activiteController.activite.libelle}" required="true" />
+
+            <h:outputLabel value="Description :" />
+            <h:inputTextarea value="#{activiteController.activite.description}" rows="3" cols="30" />
+        </h:panelGrid>
+
+        <h:commandButton value="Créer" action="#{activiteController.creerActivite}" />
+        <h:messages globalOnly="true" />
+
+        <h3>Liste des Activités Commerciales</h3>
+        <h:dataTable value="#{activiteController.activites}" var="a" border="1">
+            <h:column>
+                <f:facet name="header">Code</f:facet>
+                #{a.code}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Libellé</f:facet>
+                #{a.libelle}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Description</f:facet>
+                #{a.description}
+            </h:column>
+        </h:dataTable>
+    </h:form>
+
+</h:body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+
+<h:head>
+    <title>Tableau de Bord – Sama Boutik</title>
+    <meta charset="UTF-8" />
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 330px; /* élargi pour éviter les coupures */
+            background-color: #1e293b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .sidebar h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar a,
+        .sidebar button,
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 12px 14px;
+            border-radius: 8px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .sidebar a:hover,
+        .sidebar button:hover,
+        .sidebar .nav-item:hover {
+            background-color: #334155;
+        }
+
+        .sidebar i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .logout {
+            margin-top: auto;
+            color: #f87171;
+            font-weight: 600;
+        }
+
+        /* --- Main Content --- */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 2rem;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .topbar h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #0f172a;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: #e0ecff;
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card i {
+            font-size: 2rem;
+            color: #2563eb;
+        }
+
+        .card h4 {
+            margin: 10px 0 4px;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+    </style>
+
+    <!-- Librairie d'icônes -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</h:head>
+
+<h:body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>SAMA BOUTIK</h2>
+
+        <h:form>
+            <h:commandButton value="🏠 Dashboard"
+                             action="#{navController.goToAccueil}"
+                             styleClass="nav-item" />
+        </h:form>
+
+        <h:form>
+            <h:commandButton value="🧩 Gestion des entités commerciales"
+                             action="#{navController.goToEntite}"
+                             styleClass="nav-item" />
+        </h:form>
+
+        <h:form>
+            <h:commandButton value="⚙️ Gestion des activités commerciales"
+                             action="#{navController.goToActivite}"
+                             styleClass="nav-item" />
+        </h:form>
+
+        <h:form>
+            <h:commandButton value="🧑‍🤝‍🧑 Gestion des utilisateurs"
+                             action="#{navController.goToUtilisateur}"
+                             styleClass="nav-item" />
+        </h:form>
+        
+        <h:form>
+            <h:commandButton value="🧑‍💼 Gestion des gestionnaires"
+                             action="#{navController.goToGestionnaire}"
+                             styleClass="nav-item" />
+        </h:form>
+
+        <h:form style="margin-top:auto;">
+            <h:commandButton value="🚪 Déconnexion"
+                             action="#{navController.logout}"
+                             styleClass="logout nav-item" />
+        </h:form>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="topbar">
+            <h3>Harouna MBAYE</h3>
+            <a href="#" style="color:#2563eb; text-decoration:none; font-weight:600;">Profil</a>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <i class="fas fa-users"></i>
+                <h4>Utilisateurs</h4>
+                <p>128</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-box"></i>
+                <h4>Produits</h4>
+                <p>320</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-chart-line"></i>
+                <h4>Ventes du Mois</h4>
+                <p>87</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-truck"></i>
+                <h4>Livraisons</h4>
+                <p>42</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-wallet"></i>
+                <h4>Revenus</h4>
+                <p>5 357 500 FCFA</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-id-card"></i>
+                <h4>Employés</h4>
+                <p>14</p>
+            </div>
+        </div>
+    </div>
+</h:body>
+</html>

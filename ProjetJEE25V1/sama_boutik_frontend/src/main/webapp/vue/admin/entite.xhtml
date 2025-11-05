@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+
+<h:head>
+    <title>Gestion des Entités Commerciales</title>
+    <meta charset="UTF-8" />
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            margin: 24px;
+        }
+        h1, h2 { margin: 0 0 12px; }
+        .grid label { font-weight: 600; }
+        .grid :is(input, textarea, select) { width: 280px; }
+        .actions { margin-top: 12px; }
+        table { border-collapse: collapse; margin-top: 8px; }
+        th, td { padding: 8px 10px; border: 1px solid #ddd; }
+        th { background: #f6f7f8; }
+    </style>
+</h:head>
+
+<h:body>
+
+    <h1>Gestion des Entités Commerciales</h1>
+
+    <!-- Messages globaux -->
+    <h:messages id="msgs" globalOnly="true" layout="table" />
+
+    <!-- Formulaire de création d'entité -->
+    <h:form id="formEntite">
+        <h2>Créer une Entité</h2>
+
+        <h:panelGrid id="grid" columns="2" columnClasses="label,value" styleClass="grid">
+
+            <h:outputLabel for="nom" value="Nom :" />
+            <h:inputText id="nom" value="#{entiteController.entite.nom}" required="true"
+                         requiredMessage="Le nom de l'entité est obligatoire."/>
+
+            <h:outputLabel for="email" value="Email de contact :" />
+            <h:inputText id="email" value="#{entiteController.entite.emailContact}" />
+
+            <h:outputLabel for="tel" value="Téléphone :" />
+            <h:inputText id="tel" value="#{entiteController.entite.telephone}" />
+
+            <h:outputLabel for="activite" value="Activité commerciale :" />
+            <h:selectOneMenu id="activite" value="#{entiteController.activiteIdSelectionnee}">
+                <f:selectItems value="#{entiteController.activites}" var="a"
+                               itemValue="#{a.id}" itemLabel="#{a.libelle}" />
+            </h:selectOneMenu>
+
+            <h:outputLabel for="desc" value="Description :" />
+            <h:inputTextarea id="desc" value="#{entiteController.entite.description}" rows="3" cols="40" />
+        </h:panelGrid>
+
+        <div class="actions">
+            <h:commandButton value="Créer" action="#{entiteController.creerEntite}" />
+        </div>
+    </h:form>
+
+    <!-- Liste des entités -->
+    <h2>Liste des Entités</h2>
+    <h:form id="formListe">
+        <h:dataTable id="tableEntites" value="#{entiteController.entites}" var="e" rows="10">
+
+            <h:column>
+                <f:facet name="header">ID</f:facet>
+                #{e.id}
+            </h:column>
+
+            <h:column>
+                <f:facet name="header">Nom</f:facet>
+                #{e.nom}
+            </h:column>
+
+            <h:column>
+                <f:facet name="header">Activité</f:facet>
+                #{e.activite.libelle}
+            </h:column>
+
+            <h:column>
+                <f:facet name="header">Email</f:facet>
+                #{e.emailContact}
+            </h:column>
+
+            <h:column>
+                <f:facet name="header">Téléphone</f:facet>
+                #{e.telephone}
+            </h:column>
+
+            <h:column>
+                <f:facet name="header">Description</f:facet>
+                #{e.description}
+            </h:column>
+
+        </h:dataTable>
+    </h:form>
+
+</h:body>
+</html>
