@@ -1,6 +1,6 @@
 # 🛒 Gestion Commerciale JEE - Sama Boutik
 
-## 📌 Description
+## Description
 
 **GestionCommercialeJEE (Sama Boutik)** est une application de gestion commerciale développée en **Java EE**.
 Elle permet de gérer les activités d’une boutique ou d’une entreprise commerciale : produits, commandes, stock, utilisateurs, livraisons, etc.
@@ -36,7 +36,7 @@ sama_boutik_ejb/
 
 ---
 
-## 🧩 Fonctionnalités principales
+## Fonctionnalités principales
 
 * 👤 Gestion des utilisateurs (authentification, rôles, permissions)
 * 🛍️ Gestion des produits et catalogues
@@ -48,7 +48,7 @@ sama_boutik_ejb/
 
 ---
 
-## 🚀 Installation & Exécution
+## Installation & Exécution
 
 ### 1️⃣ Cloner le projet
 
